@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>首頁 — 校園失物協尋 v2</title>
+  <style>
+    :root {
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --primary-light: #ccfbf1;
+      --accent: #f59e0b;
+      --bg: #f0faf9;
+      --surface: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-title { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .user-chip { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 12px; font-size: 12px; display: none; }
+    .btn-login-sm { background: #fff; color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; }
+
+    /* ── SEARCH BAR ── */
+    .search-wrap {
+      background: var(--primary-dark);
+      padding: 10px 16px 14px;
+    }
+    .search-row {
+      display: flex;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .search-row input { flex: 1; padding: 11px 14px; border: none; outline: none; font-size: 15px; }
+    .search-row button { background: var(--accent); border: none; padding: 0 16px; font-size: 16px; cursor: pointer; }
+    .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .chip.active { background: #fff; color: var(--primary); border-color: #fff; }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; max-width: 900px; margin: 0 auto; align-items: flex-start; }
+
+    /* Sidebar (desktop only) */
+    .sidebar {
+      width: 200px;
+      flex-shrink: 0;
+      padding: 16px 12px;
+      display: none;
+    }
+    @media (min-width: 700px) { .sidebar { display: block; } }
+    .sidebar-section { margin-bottom: 16px; }
+    .sidebar-title { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+    .sidebar-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 2px;
+      font-weight: 500;
+      transition: background .12s;
+    }
+    .sidebar-btn:hover { background: var(--primary-light); color: var(--primary); }
+    .sidebar-btn.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
+
+    /* List area */
+    .list-area { flex: 1; padding: 12px 16px 80px; min-width: 0; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .stats-count { font-size: 13px; color: var(--muted); }
+    .sort-select { font-size: 13px; border: 1.5px solid var(--border); border-radius: 8px; padding: 4px 10px; outline: none; color: var(--text); background: #fff; cursor: pointer; }
+
+    /* ── LIST ITEMS ── */
+    .item-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .item-row {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow .15s, transform .1s;
+    }
+    .item-row:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.1); transform: translateX(2px); }
+
+    .item-row-accent {
+      width: 5px;
+      flex-shrink: 0;
+    }
+    .accent-lost { background: var(--accent); }
+    .accent-found { background: var(--primary); }
+
+    .item-row-icon {
+      width: 60px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: var(--bg);
+    }
+    .item-row-body { flex: 1; padding: 12px 12px 10px; min-width: 0; }
+    .item-row-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+    .type-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .tag-lost { background: #fef3c7; color: #92400e; }
+    .tag-found { background: #d1fae5; color: #065f46; }
+    .cat-tag { font-size: 11px; color: var(--muted); }
+    .item-row-title { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+    .item-row-meta { font-size: 12px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+    .item-row-right { padding: 12px 14px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 6px; flex-shrink: 0; }
+    .status-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .pill-searching { background: #fee2e2; color: #dc2626; }
+    .pill-done { background: #d1fae5; color: #065f46; }
+
+    /* Empty */
+    .empty { text-align: center; padding: 60px 0; color: var(--muted); }
+    .empty .emoji { font-size: 44px; margin-bottom: 10px; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      height: 60px;
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 11px;
+      gap: 3px;
+      transition: color .15s;
+    }
+    .nav-item .nav-icon { font-size: 20px; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item.active .nav-icon { transform: scale(1.1); }
+    .nav-post {
+      background: var(--primary);
+      color: #fff !important;
+      border-radius: 16px 16px 0 0;
+      margin: 0 8px;
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">🔍 校園失物協尋</div>
+    <div class="header-right">
+      <span class="user-chip" id="user-chip"></span>
+      <a class="btn-login-sm" id="auth-btn" href="auth.html">登入</a>
+      <button class="btn-login-sm" id="logout-btn" onclick="logout()" style="display:none">登出</button>
+    </div>
+  </header>
+
+  <div class="search-wrap">
+    <div class="search-row">
+      <input type="text" id="search-input" placeholder="搜尋物品名稱、地點…" oninput="renderList()" />
+      <button onclick="renderList()">🔍</button>
+    </div>
+    <div class="filter-chips" id="type-chips">
+      <div class="chip active" data-val="" onclick="setChip(this,'type')">全部</div>
+      <div class="chip" data-val="lost" onclick="setChip(this,'type')">😢 遺失物</div>
+      <div class="chip" data-val="found" onclick="setChip(this,'type')">🎉 拾獲物</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar (desktop) -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">物品分類</div>
+        <button class="sidebar-btn active" data-cat="" onclick="setSidebar(this)">📋 全部</button>
+        <button class="sidebar-btn" data-cat="書本文具" onclick="setSidebar(this)">📚 書本文具</button>
+        <button class="sidebar-btn" data-cat="3C電子" onclick="setSidebar(this)">💻 3C 電子</button>
+        <button class="sidebar-btn" data-cat="衣物配件" onclick="setSidebar(this)">👕 衣物配件</button>
+        <button class="sidebar-btn" data-cat="證件卡片" onclick="setSidebar(this)">🪪 證件卡片</button>
+        <button class="sidebar-btn" data-cat="餐具飲料" onclick="setSidebar(this)">🍱 餐具飲料</button>
+        <button class="sidebar-btn" data-cat="其他" onclick="setSidebar(this)">📦 其他</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">狀態</div>
+        <button class="sidebar-btn active" data-status="" onclick="setStatusSidebar(this)">全部狀態</button>
+        <button class="sidebar-btn" data-status="searching" onclick="setStatusSidebar(this)">🔍 尋找中</button>
+        <button class="sidebar-btn" data-status="done" onclick="setStatusSidebar(this)">✅ 已找到</button>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div class="list-area">
+      <div class="stats-bar">
+        <span class="stats-count" id="stats-count">共 0 筆</span>
+        <select class="sort-select" id="sort-select" onchange="renderList()">
+          <option value="newest">最新優先</option>
+          <option value="oldest">最舊優先</option>
+        </select>
+      </div>
+      <div class="item-list" id="item-list"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a class="nav-item active" href="index.html">
+      <span class="nav-icon">🏠</span>首頁
+    </a>
+    <a class="nav-item" href="index.html?type=lost">
+      <span class="nav-icon">😢</span>遺失物
+    </a>
+    <a class="nav-item nav-post" href="post.html">
+      <span class="nav-icon">＋</span>發布
+    </a>
+    <a class="nav-item" href="index.html?type=found">
+      <span class="nav-icon">🎉</span>拾獲物
+    </a>
+    <a class="nav-item" href="auth.html" id="nav-login">
+      <span class="nav-icon">👤</span>登入
+    </a>
+  </nav>
+
+  <script>
+    const EMOJI = { '書本文具':'📚','3C電子':'💻','衣物配件':'👕','證件卡片':'🪪','餐具飲料':'🍱','其他':'📦' };
+    let filterType = '', filterCat = '', filterStatus = '';
+
+    function seedData() {
+      if (localStorage.getItem('lf_seeded')) return;
+      const items = [
+        { id:1, type:'lost', category:'書本文具', title:'微積分課本', location:'圖書館 3F', time:'2026-03-24', desc:'藍色封面，第三版', status:'searching', contact:'王小明 0912-345-678', postedBy:'王小明' },
+        { id:2, type:'found', category:'3C電子', title:'黑色耳機', location:'學生餐廳', time:'2026-03-24', desc:'Sony 黑色有線耳機', status:'searching', contact:'林小花 0987-654-321', postedBy:'林小花' },
+        { id:3, type:'lost', category:'證件卡片', title:'學生證', location:'體育館', time:'2026-03-23', desc:'姓名已遮，卡面有貼紙', status:'done', contact:'陳大海 0923-111-222', postedBy:'陳大海' },
+        { id:4, type:'found', category:'衣物配件', title:'藍色外套', location:'電梯旁椅子', time:'2026-03-22', desc:'L 號深藍色連帽外套', status:'searching', contact:'張美雲 0956-333-444', postedBy:'張美雲' },
+      ];
+      localStorage.setItem('lf_items', JSON.stringify(items));
+      localStorage.setItem('lf_next_id', '5');
+      localStorage.setItem('lf_seeded', '1');
+    }
+
+    function getItems() { return JSON.parse(localStorage.getItem('lf_items') || '[]'); }
+
+    function setChip(el, group) {
+      document.querySelectorAll('#type-chips .chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      filterType = el.dataset.val;
+      renderList();
+    }
+    function setSidebar(el) {
+      document.querySelectorAll('.sidebar-btn[data-cat]').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      filterCat = el.dataset.cat;
+      renderList();
+    }
+    function setStatusSidebar(el) {
+      document.querySelectorAll('.sidebar-btn[data-status]').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      filterStatus = el.dataset.status;
+      renderList();
+    }
+
+    function renderList() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      const sort = document.getElementById('sort-select').value;
+      let items = getItems();
+      if (q) items = items.filter(i => i.title.toLowerCase().includes(q) || (i.location||'').toLowerCase().includes(q) || (i.desc||'').toLowerCase().includes(q));
+      if (filterType) items = items.filter(i => i.type === filterType);
+      if (filterCat) items = items.filter(i => i.category === filterCat);
+      if (filterStatus) items = items.filter(i => i.status === filterStatus);
+      if (sort === 'newest') items = items.slice().reverse();
+
+      document.getElementById('stats-count').textContent = '共 ' + items.length + ' 筆';
+      const list = document.getElementById('item-list');
+      if (!items.length) {
+        list.innerHTML = '<div class="empty"><div class="emoji">🤷</div><div>找不到符合的物品</div></div>';
+        return;
+      }
+      list.innerHTML = items.map(item => `
+        <a class="item-row" href="detail.html?id=${item.id}">
+          <div class="item-row-accent ${item.type==='lost'?'accent-lost':'accent-found'}"></div>
+          <div class="item-row-icon">${EMOJI[item.category]||'📦'}</div>
+          <div class="item-row-body">
+            <div class="item-row-top">
+              <span class="type-tag ${item.type==='lost'?'tag-lost':'tag-found'}">${item.type==='lost'?'遺失':'拾獲'}</span>
+              <span class="cat-tag">${item.category}</span>
+            </div>
+            <div class="item-row-title">${item.title}</div>
+            <div class="item-row-meta">
+              <span>📍 ${item.location}</span>
+              <span>📅 ${item.time}</span>
+            </div>
+          </div>
+          <div class="item-row-right">
+            <span class="status-pill ${item.status==='done'?'pill-done':'pill-searching'}">${item.status==='done'?'已找到':'尋找中'}</span>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    function logout() { localStorage.removeItem('lf_current_user'); location.reload(); }
+
+    seedData();
+
+    // Handle URL param
+    const urlType = new URLSearchParams(location.search).get('type');
+    if (urlType) {
+      filterType = urlType;
+      document.querySelectorAll('#type-chips .chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.val === urlType);
+      });
+    }
+
+    const user = JSON.parse(localStorage.getItem('lf_current_user') || 'null');
+    if (user) {
+      const chip = document.getElementById('user-chip');
+      chip.textContent = '👤 ' + user.name;
+      chip.style.display = 'block';
+      document.getElementById('auth-btn').style.display = 'none';
+      document.getElementById('logout-btn').style.display = 'block';
+      document.getElementById('nav-login').innerHTML = '<span class="nav-icon">👤</span>' + user.name.slice(0,3);
+    }
+
+    renderList();
+  </script>
+</body>
+</html>

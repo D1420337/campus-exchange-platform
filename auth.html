@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登入 / 註冊 — 校園失物協尋</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .logo .icon { font-size: 48px; }
+    .logo h1 { font-size: 22px; color: #1a1a2e; margin-top: 8px; font-weight: 700; }
+    .logo p { font-size: 13px; color: #888; margin-top: 4px; }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Tab */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #eee;
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      background: none;
+      border: none;
+      font-size: 15px;
+      color: #888;
+      cursor: pointer;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color .2s, border-color .2s;
+    }
+    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+    /* Form */
+    .form-panel { display: none; }
+    .form-panel.active { display: block; }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 600; }
+    input[type="text"], input[type="password"], input[type="email"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+      color: #222;
+    }
+    input:focus { border-color: #2563eb; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background .2s;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+
+    .msg {
+      font-size: 13px;
+      text-align: center;
+      margin-top: 12px;
+      min-height: 18px;
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    .msg.error { background: #fef2f2; color: #dc2626; }
+    .msg.success { background: #f0fdf4; color: #16a34a; }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="logo">
+    <div class="icon">🔍</div>
+    <h1>校園失物協尋平台</h1>
+    <p>找回遺失物，歸還拾獲物</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">登入</button>
+      <button class="tab-btn" id="tab-register" onclick="switchTab('register')">註冊</button>
+    </div>
+
+    <!-- 登入 -->
+    <div class="form-panel active" id="panel-login">
+      <div class="form-group">
+        <label for="login-email">學號 / Email</label>
+        <input type="text" id="login-email" placeholder="請輸入學號或 Email" />
+      </div>
+      <div class="form-group">
+        <label for="login-pw">密碼</label>
+        <input type="password" id="login-pw" placeholder="請輸入密碼" />
+      </div>
+      <button class="btn-primary" onclick="doLogin()">登入</button>
+      <div class="msg" id="login-msg"></div>
+    </div>
+
+    <!-- 註冊 -->
+    <div class="form-panel" id="panel-register">
+      <div class="form-group">
+        <label for="reg-name">姓名</label>
+        <input type="text" id="reg-name" placeholder="請輸入姓名" />
+      </div>
+      <div class="form-group">
+        <label for="reg-email">學號 / Email</label>
+        <input type="text" id="reg-email" placeholder="請輸入學號或 Email" />
+      </div>
+      <div class="form-group">
+        <label for="reg-phone">聯絡電話（選填）</label>
+        <input type="text" id="reg-phone" placeholder="方便聯絡的電話" />
+      </div>
+      <div class="form-group">
+        <label for="reg-pw">密碼</label>
+        <input type="password" id="reg-pw" placeholder="至少 6 個字元" />
+      </div>
+      <div class="form-group">
+        <label for="reg-pw2">確認密碼</label>
+        <input type="password" id="reg-pw2" placeholder="再次輸入密碼" />
+      </div>
+      <button class="btn-primary" onclick="doRegister()">建立帳號</button>
+      <div class="msg" id="register-msg"></div>
+    </div>
+  </div>
+
+  <a class="back-link" href="index.html">← 返回首頁</a>
+
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('panel-' + tab).classList.add('active');
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = 'msg ' + type;
+    }
+
+    function doLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const pw = document.getElementById('login-pw').value;
+      if (!email || !pw) { showMsg('login-msg', '請填寫所有欄位', 'error'); return; }
+
+      const users = JSON.parse(localStorage.getItem('lf_users') || '[]');
+      const user = users.find(u => u.email === email && u.pw === pw);
+      if (!user) { showMsg('login-msg', '帳號或密碼錯誤', 'error'); return; }
+
+      localStorage.setItem('lf_current_user', JSON.stringify(user));
+      showMsg('login-msg', '登入成功！正在跳轉…', 'success');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+    }
+
+    function doRegister() {
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const pw = document.getElementById('reg-pw').value;
+      const pw2 = document.getElementById('reg-pw2').value;
+
+      if (!name || !email || !pw) { showMsg('register-msg', '請填寫必填欄位', 'error'); return; }
+      if (pw.length < 6) { showMsg('register-msg', '密碼至少需 6 個字元', 'error'); return; }
+      if (pw !== pw2) { showMsg('register-msg', '兩次密碼不一致', 'error'); return; }
+
+      const users = JSON.parse(localStorage.getItem('lf_users') || '[]');
+      if (users.find(u => u.email === email)) { showMsg('register-msg', '此帳號已被註冊', 'error'); return; }
+
+      const newUser = { name, email, phone, pw };
+      users.push(newUser);
+      localStorage.setItem('lf_users', JSON.stringify(users));
+      localStorage.setItem('lf_current_user', JSON.stringify(newUser));
+
+      showMsg('register-msg', '註冊成功！正在跳轉…', 'success');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+    }
+
+    // 已登入就直接跳回首頁
+    if (localStorage.getItem('lf_current_user')) {
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

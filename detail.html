@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物品詳情 — 校園失物協尋</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+    }
+
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo { font-size: 18px; font-weight: 800; color: #2563eb; display: flex; align-items: center; gap: 6px; }
+    .nav-logo span { color: #1a1a2e; }
+    .nav-back { font-size: 14px; color: #2563eb; text-decoration: none; font-weight: 600; }
+    .nav-back:hover { text-decoration: underline; }
+
+    .content { max-width: 600px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* Hero card */
+    .item-hero {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .item-icon-banner {
+      background: linear-gradient(135deg, #e8f0fe 0%, #dbeafe 100%);
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 72px;
+    }
+    .item-hero-body { padding: 20px; }
+
+    .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge-lost { background: #fef3c7; color: #92400e; }
+    .badge-found { background: #d1fae5; color: #065f46; }
+    .badge-cat { background: #ede9fe; color: #6d28d9; }
+
+    .item-title { font-size: 24px; font-weight: 800; color: #1a1a2e; margin-bottom: 6px; }
+    .item-posted { font-size: 13px; color: #aaa; }
+
+    /* Status */
+    .status-section {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+      padding: 18px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .status-label { font-size: 14px; font-weight: 700; color: #444; }
+    .status-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .dot-searching { background: #ef4444; animation: pulse 1.5s infinite; }
+    .dot-done { background: #22c55e; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+    .status-text { font-size: 15px; font-weight: 700; }
+    .text-searching { color: #dc2626; }
+    .text-done { color: #16a34a; }
+
+    .btn-status {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-mark-done { background: #d1fae5; color: #065f46; }
+    .btn-mark-done:hover { background: #a7f3d0; }
+    .btn-mark-searching { background: #fee2e2; color: #dc2626; }
+    .btn-mark-searching:hover { background: #fecaca; }
+
+    /* Info card */
+    .info-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .info-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 14px;
+    }
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .info-block { flex: 1; }
+    .info-label { font-size: 12px; color: #999; margin-bottom: 2px; }
+    .info-value { font-size: 15px; color: #222; font-weight: 500; }
+
+    /* Contact */
+    .contact-card {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1.5px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .contact-card h3 { font-size: 16px; font-weight: 700; color: #1d4ed8; margin-bottom: 6px; }
+    .contact-value { font-size: 18px; font-weight: 800; color: #1a1a2e; letter-spacing: .5px; }
+    .contact-hint { font-size: 12px; color: #6b7280; margin-top: 6px; }
+
+    /* Not found */
+    .not-found { text-align: center; padding: 60px 20px; color: #aaa; }
+    .not-found .emoji { font-size: 48px; margin-bottom: 12px; }
+    .not-found a { color: #2563eb; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">🔍 <span>校園失物協尋</span></div>
+    <a class="nav-back" href="index.html">← 返回列表</a>
+  </nav>
+
+  <div class="content" id="main-content">
+    <div class="not-found"><div class="emoji">⏳</div><div>載入中…</div></div>
+  </div>
+
+  <script>
+    const CATEGORY_EMOJI = {
+      '書本文具': '📚', '3C電子': '💻', '衣物配件': '👕',
+      '證件卡片': '🪪', '餐具飲料': '🍱', '其他': '📦'
+    };
+
+    function getItem(id) {
+      const items = JSON.parse(localStorage.getItem('lf_items') || '[]');
+      return items.find(i => i.id == id) || null;
+    }
+
+    function saveItem(updated) {
+      const items = JSON.parse(localStorage.getItem('lf_items') || '[]');
+      const idx = items.findIndex(i => i.id == updated.id);
+      if (idx !== -1) items[idx] = updated;
+      localStorage.setItem('lf_items', JSON.stringify(items));
+    }
+
+    function toggleStatus(id) {
+      const item = getItem(id);
+      if (!item) return;
+      item.status = item.status === 'searching' ? 'done' : 'searching';
+      saveItem(item);
+      render(item.id);
+    }
+
+    function render(id) {
+      const item = getItem(id);
+      const container = document.getElementById('main-content');
+
+      if (!item) {
+        container.innerHTML = `
+          <div class="not-found">
+            <div class="emoji">🤷</div>
+            <div>找不到此物品</div>
+            <div style="margin-top:12px"><a href="index.html">← 返回首頁</a></div>
+          </div>`;
+        return;
+      }
+
+      const user = JSON.parse(localStorage.getItem('lf_current_user') || 'null');
+      const canToggle = !!user;
+
+      container.innerHTML = `
+        <!-- Hero -->
+        <div class="item-hero">
+          <div class="item-icon-banner">${CATEGORY_EMOJI[item.category] || '📦'}</div>
+          <div class="item-hero-body">
+            <div class="badge-row">
+              <span class="badge ${item.type === 'lost' ? 'badge-lost' : 'badge-found'}">${item.type === 'lost' ? '🟡 遺失物' : '🟢 拾獲物'}</span>
+              <span class="badge badge-cat">🏷 ${item.category}</span>
+            </div>
+            <div class="item-title">${item.title}</div>
+            <div class="item-posted">發布者：${item.postedBy || '匿名'}</div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="status-section">
+          <div>
+            <div class="status-label">目前狀態</div>
+            <div class="status-value" style="margin-top:4px">
+              <div class="status-dot ${item.status === 'done' ? 'dot-done' : 'dot-searching'}"></div>
+              <span class="status-text ${item.status === 'done' ? 'text-done' : 'text-searching'}">
+                ${item.status === 'done' ? '✅ 已找到' : '🔍 尋找中'}
+              </span>
+            </div>
+          </div>
+          ${canToggle ? `
+            <button class="btn-status ${item.status === 'done' ? 'btn-mark-searching' : 'btn-mark-done'}"
+              onclick="toggleStatus(${item.id})">
+              ${item.status === 'done' ? '標記為尋找中' : '標記為已找到 ✅'}
+            </button>
+          ` : '<span style="font-size:12px;color:#bbb">登入後可更新狀態</span>'}
+        </div>
+
+        <!-- Info -->
+        <div class="info-card">
+          <h3>📋 物品資訊</h3>
+          <div class="info-row">
+            <div class="info-icon">📍</div>
+            <div class="info-block">
+              <div class="info-label">${item.type === 'lost' ? '遺失地點' : '拾獲地點'}</div>
+              <div class="info-value">${item.location}</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-icon">📅</div>
+            <div class="info-block">
+              <div class="info-label">${item.type === 'lost' ? '遺失時間' : '拾獲時間'}</div>
+              <div class="info-value">${item.time}</div>
+            </div>
+          </div>
+          ${item.desc ? `
+          <div class="info-row">
+            <div class="info-icon">📝</div>
+            <div class="info-block">
+              <div class="info-label">物品描述</div>
+              <div class="info-value">${item.desc}</div>
+            </div>
+          </div>` : ''}
+        </div>
+
+        <!-- Contact -->
+        <div class="contact-card">
+          <h3>📞 聯絡方式</h3>
+          <div class="contact-value">${item.contact}</div>
+          <div class="contact-hint">請自行聯繫確認後再認領，避免誤領</div>
+        </div>
+      `;
+    }
+
+    // Read ID from URL
+    const params = new URLSearchParams(location.search);
+    const itemId = params.get('id');
+
+    if (itemId) {
+      render(itemId);
+    } else {
+      document.getElementById('main-content').innerHTML = `
+        <div class="not-found">
+          <div class="emoji">🤷</div>
+          <div>未指定物品</div>
+          <div style="margin-top:12px"><a href="index.html">← 返回首頁</a></div>
+        </div>`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物品詳情 — 校園失物協尋 v4</title>
+  <style>
+    :root { --bg:#fef9f0; --cork:#f5e6c8; --surface:#fffdf7; --border:#e8d5a3; --primary:#d97706; --primary-dark:#b45309; --primary-light:#fde68a; --text:#1c1917; --muted:#78716c; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Helvetica Neue',Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    nav { background:var(--primary); height:58px; padding:0 20px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.15); position:sticky; top:0; z-index:100; }
+    .nav-brand { font-size:18px; font-weight:900; color:#fff; }
+    .nav-back { color:#fff; text-decoration:none; font-size:14px; font-weight:700; }
+
+    .content { max-width:640px; margin:0 auto; padding:20px 16px 60px; }
+
+    /* Big note card */
+    .hero-note {
+      border-radius:4px; padding:24px 22px; margin-bottom:14px;
+      position:relative; box-shadow:4px 5px 0 #c9a050, 0 8px 24px rgba(0,0,0,.12);
+    }
+    .hero-note.type-lost { background:#fff5f5; border:1px solid #fca5a5; }
+    .hero-note.type-found { background:#f0fdf4; border:1px solid #86efac; }
+
+    /* Pin at top */
+    .hero-pin {
+      width:20px; height:20px; border-radius:50%;
+      position:absolute; top:-8px; left:28px;
+      box-shadow:0 2px 6px rgba(0,0,0,.25);
+    }
+    .pin-lost { background:#ef4444; }
+    .pin-found { background:#16a34a; }
+
+    .hero-bg { position:absolute; right:20px; top:50%; transform:translateY(-50%); font-size:80px; opacity:.1; }
+    .hero-badges { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .badge { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:800; }
+    .b-lost { background:rgba(239,68,68,.12); color:#b91c1c; border:1px solid #fca5a5; }
+    .b-found { background:rgba(22,163,74,.1); color:#15803d; border:1px solid #86efac; }
+    .b-cat { background:var(--cork); color:#7c5c1e; border:1px solid var(--border); }
+    .hero-title { font-size:26px; font-weight:900; margin-bottom:6px; }
+    .hero-by { font-size:13px; color:var(--muted); }
+
+    /* Status */
+    .status-wrap { background:var(--surface); border:1px solid var(--border); border-radius:4px; margin-bottom:12px; padding:14px 18px; box-shadow:2px 2px 0 var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .status-left { display:flex; align-items:center; gap:12px; }
+    .status-emoji { font-size:28px; }
+    .status-info .slabel { font-size:12px; color:var(--muted); margin-bottom:2px; }
+    .status-info .sval { font-size:16px; font-weight:900; }
+    .sval-s { color:#b91c1c; }
+    .sval-d { color:#15803d; }
+
+    .btn-toggle { padding:9px 16px; border-radius:6px; border:2px solid; font-size:13px; font-weight:800; cursor:pointer; transition:.15s; background:none; }
+    .btn-td { border-color:#86efac; color:#15803d; }
+    .btn-td:hover { background:#dcfce7; }
+    .btn-ts { border-color:#fca5a5; color:#b91c1c; }
+    .btn-ts:hover { background:#fee2e2; }
+
+    /* Info */
+    .info-block { background:var(--surface); border:1px solid var(--border); border-radius:4px; margin-bottom:12px; overflow:hidden; box-shadow:2px 2px 0 var(--border); }
+    .info-block-header { background:var(--cork); padding:10px 16px; font-size:12px; font-weight:800; color:#7c5c1e; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+    .info-row { display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-bottom:1px solid #f5e6c8; }
+    .info-row:last-child { border-bottom:none; }
+    .ir-icon { font-size:20px; flex-shrink:0; }
+    .ir-body .irlabel { font-size:12px; color:var(--muted); margin-bottom:2px; }
+    .ir-body .irval { font-size:15px; color:var(--text); font-weight:600; line-height:1.5; }
+
+    /* Contact */
+    .contact-block { background:#fffbeb; border:2px solid var(--primary-light); border-radius:4px; padding:18px 16px; margin-bottom:12px; box-shadow:3px 3px 0 #fcd34d; }
+    .contact-block h3 { font-size:12px; font-weight:800; color:#92400e; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+    .contact-val { font-size:20px; font-weight:900; color:var(--text); }
+    .contact-hint { font-size:12px; color:var(--muted); margin-top:6px; }
+
+    /* Not found */
+    .not-found { text-align:center; padding:80px 20px; color:var(--muted); }
+    .nf-emoji { font-size:52px; margin-bottom:12px; }
+    .not-found a { color:var(--primary); text-decoration:none; font-weight:700; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-brand">📌 校園失物協尋</div>
+    <a class="nav-back" href="index.html">← 返回公告欄</a>
+  </nav>
+
+  <div class="content" id="main"></div>
+
+  <script>
+    const EMOJI={'書本文具':'📚','3C電子':'💻','衣物配件':'👕','證件卡片':'🪪','餐具飲料':'🍱','其他':'📦'};
+    const user=JSON.parse(localStorage.getItem('lf_current_user')||'null');
+    function getItem(id){return(JSON.parse(localStorage.getItem('lf_items')||'[]')).find(i=>i.id==id)||null;}
+    function saveItem(u){const a=JSON.parse(localStorage.getItem('lf_items')||'[]'),i=a.findIndex(x=>x.id==u.id);if(i!==-1)a[i]=u;localStorage.setItem('lf_items',JSON.stringify(a));}
+    function toggle(id){const item=getItem(id);if(!item)return;item.status=item.status==='searching'?'done':'searching';saveItem(item);render(id);}
+
+    function render(id){
+      const item=getItem(id), c=document.getElementById('main');
+      if(!item){c.innerHTML=`<div class="not-found"><div class="nf-emoji">📭</div><div>找不到此公告</div><div style="margin-top:12px"><a href="index.html">← 返回</a></div></div>`;return;}
+      const done=item.status==='done', icon=EMOJI[item.category]||'📦';
+      c.innerHTML=`
+        <div class="hero-note type-${item.type}">
+          <div class="hero-pin pin-${item.type}"></div>
+          <div class="hero-bg">${icon}</div>
+          <div class="hero-badges">
+            <span class="badge b-${item.type}">${item.type==='lost'?'😢 遺失物':'🎉 拾獲物'}</span>
+            <span class="badge b-cat">${item.category}</span>
+          </div>
+          <div class="hero-title">${item.title}</div>
+          <div class="hero-by">張貼者：${item.postedBy||'匿名'}</div>
+        </div>
+
+        <div class="status-wrap">
+          <div class="status-left">
+            <div class="status-emoji">${done?'✅':'🔍'}</div>
+            <div class="status-info">
+              <div class="slabel">目前狀態</div>
+              <div class="sval ${done?'sval-d':'sval-s'}">${done?'已找到':'尋找中'}</div>
+            </div>
+          </div>
+          ${user?`<button class="btn-toggle ${done?'btn-ts':'btn-td'}" onclick="toggle(${item.id})">${done?'改為尋找中':'✅ 標記已找到'}</button>`:`<span style="font-size:12px;color:var(--muted)">登入後可更新</span>`}
+        </div>
+
+        <div class="info-block">
+          <div class="info-block-header">📋 物品資訊</div>
+          <div class="info-row">
+            <div class="ir-icon">📍</div>
+            <div class="ir-body"><div class="irlabel">${item.type==='lost'?'遺失地點':'拾獲地點'}</div><div class="irval">${item.location}</div></div>
+          </div>
+          <div class="info-row">
+            <div class="ir-icon">📅</div>
+            <div class="ir-body"><div class="irlabel">${item.type==='lost'?'遺失時間':'拾獲時間'}</div><div class="irval">${item.time}</div></div>
+          </div>
+          ${item.desc?`<div class="info-row"><div class="ir-icon">📝</div><div class="ir-body"><div class="irlabel">物品描述</div><div class="irval">${item.desc}</div></div></div>`:''}
+        </div>
+
+        <div class="contact-block">
+          <h3>📞 聯絡方式</h3>
+          <div class="contact-val">${item.contact}</div>
+          <div class="contact-hint">請確認是本人物品後再聯絡，避免誤領</div>
+        </div>
+      `;
+    }
+
+    const id=new URLSearchParams(location.search).get('id');
+    if(id)render(id);
+    else document.getElementById('main').innerHTML=`<div class="not-found"><div class="nf-emoji">📭</div><div>未指定物品</div><div style="margin-top:12px"><a href="index.html">← 返回</a></div></div>`;
+  </script>
+</body>
+</html>

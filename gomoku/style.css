@@ -1,0 +1,219 @@
+:root {
+    --bg-color: #f0f4f8;
+    --board-bg: #e6b981;
+    --board-border: #8b5a2b;
+    --line-color: #5c3a21;
+    --black-piece: #111;
+    --white-piece: #f9f9f9;
+    --text-color: #333;
+    --btn-bg: #4a90e2;
+    --btn-hover: #357abd;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Helvetica Neue", Arial, "LiHei Pro", "微軟正黑體", sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    width: 100%;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.rules {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#status {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+#restart-btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+    color: #fff;
+    background-color: var(--btn-bg);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    font-weight: bold;
+}
+
+#restart-btn:hover {
+    background-color: var(--btn-hover);
+}
+
+#restart-btn:active {
+    transform: scale(0.95);
+}
+
+.board-wrapper {
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+/* 15x15 board */
+.board {
+    display: grid;
+    grid-template-columns: repeat(15, 32px);
+    grid-template-rows: repeat(15, 32px);
+    background-color: var(--board-bg);
+    padding: 15px;
+    border-radius: 4px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.3);
+    border: 2px solid var(--board-border);
+    gap: 0;
+}
+
+.cell {
+    width: 32px;
+    height: 32px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Grid lines simulating real board */
+.cell::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background-color: var(--line-color);
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.cell::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1.5px;
+    background-color: var(--line-color);
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+/* Handle board edges */
+.cell[data-row="0"]::after { top: 50%; }
+.cell[data-row="14"]::after { bottom: 50%; }
+.cell[data-col="0"]::before { left: 50%; }
+.cell[data-col="14"]::before { right: 50%; }
+
+/* Hover effect for empty cells */
+.cell:not(.black):not(.white):hover .piece-preview {
+    opacity: 0.5;
+}
+
+/* Ghost piece for hover */
+.piece-preview {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    position: relative;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.board.black-turn .cell:not(.black):not(.white):hover .piece-preview {
+    background-color: var(--black-piece);
+}
+
+.board.white-turn .cell:not(.black):not(.white):hover .piece-preview {
+    background-color: var(--white-piece);
+}
+
+/* Actual Pieces */
+.piece {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    animation: drop 0.2s ease-in;
+}
+
+.cell.black .piece {
+    background: radial-gradient(circle at 30% 30%, #555, #111);
+}
+
+.cell.white .piece {
+    background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+}
+
+@keyframes drop {
+    0% { transform: scale(1.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+    header h1 {
+        font-size: 2rem;
+    }
+    .game-info {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .board {
+        grid-template-columns: repeat(15, 22px);
+        grid-template-rows: repeat(15, 22px);
+        padding: 10px;
+    }
+    .cell {
+        width: 22px;
+        height: 22px;
+    }
+    .piece, .piece-preview {
+        width: 18px;
+        height: 18px;
+    }
+}

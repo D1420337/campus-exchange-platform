@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋遊戲</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>五子棋</h1>
+            <p class="rules">玩法說明：黑白雙方輪流落子，先在橫、直、或斜向連成 5 子者獲勝。</p>
+        </header>
+
+        <div class="game-info">
+            <h2 id="status">目前輪到：黑子</h2>
+            <button id="restart-btn">重新開始遊戲</button>
+        </div>
+
+        <div class="board-wrapper">
+            <div id="board" class="board"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

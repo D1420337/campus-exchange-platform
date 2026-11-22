@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>發布物品 — 校園失物協尋</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+    }
+
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo { font-size: 18px; font-weight: 800; color: #2563eb; display: flex; align-items: center; gap: 6px; }
+    .nav-logo span { color: #1a1a2e; }
+    .nav-back { font-size: 14px; color: #2563eb; text-decoration: none; font-weight: 600; }
+    .nav-back:hover { text-decoration: underline; }
+
+    .page-header {
+      background: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      padding: 20px 16px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .page-header h2 { font-size: 20px; font-weight: 800; color: #1a1a2e; }
+    .page-header p { font-size: 13px; color: #888; margin-top: 4px; }
+
+    .content { max-width: 600px; margin: 0 auto; padding: 20px 16px 80px; }
+
+    /* Type Toggle */
+    .type-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .type-btn {
+      padding: 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+    }
+    .type-btn .type-icon { font-size: 28px; display: block; margin-bottom: 6px; }
+    .type-btn.selected-lost { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+    .type-btn.selected-found { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+
+    /* Form */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.07);
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .card-label { font-size: 13px; font-weight: 700; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px; }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 14px; color: #444; margin-bottom: 6px; font-weight: 600; }
+    .required { color: #dc2626; margin-left: 2px; }
+
+    input[type="text"], input[type="datetime-local"],
+    select, textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+      color: #222;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #2563eb; }
+    textarea { resize: vertical; min-height: 90px; }
+
+    /* Photo upload */
+    .photo-upload {
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: #fafafa;
+    }
+    .photo-upload:hover { border-color: #2563eb; background: #eff6ff; }
+    .photo-upload input { display: none; }
+    .photo-upload .upload-icon { font-size: 36px; }
+    .photo-upload p { font-size: 14px; color: #888; margin-top: 8px; }
+    .photo-upload .hint { font-size: 12px; color: #bbb; margin-top: 4px; }
+    #photo-preview {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 10px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* Submit */
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-submit:hover { background: #1d4ed8; }
+    .btn-submit:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    .msg {
+      font-size: 14px;
+      text-align: center;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+    .msg.error { background: #fef2f2; color: #dc2626; display: block; }
+    .msg.success { background: #f0fdf4; color: #16a34a; display: block; }
+
+    /* login warning */
+    .login-warning {
+      background: #fef3c7;
+      border: 1.5px solid #fcd34d;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-size: 14px;
+      color: #92400e;
+    }
+    .login-warning a { color: #2563eb; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">🔍 <span>校園失物協尋</span></div>
+    <a class="nav-back" href="index.html">← 返回首頁</a>
+  </nav>
+
+  <div class="page-header">
+    <h2>發布物品資訊</h2>
+    <p>填寫以下資訊，幫助大家快速找到物主或認領物品</p>
+  </div>
+
+  <div class="content">
+
+    <div class="login-warning" id="login-warning" style="display:none">
+      ⚠️ 請先 <a href="auth.html">登入或註冊</a> 才能發布物品
+    </div>
+
+    <!-- 類型選擇 -->
+    <div class="type-toggle">
+      <div class="type-btn selected-lost" id="btn-lost" onclick="selectType('lost')">
+        <span class="type-icon">😢</span>
+        我遺失了物品
+      </div>
+      <div class="type-btn" id="btn-found" onclick="selectType('found')">
+        <span class="type-icon">🎉</span>
+        我拾獲了物品
+      </div>
+    </div>
+
+    <!-- 基本資訊 -->
+    <div class="card">
+      <div class="card-label">📋 物品資訊</div>
+
+      <div class="form-group">
+        <label>物品名稱 <span class="required">*</span></label>
+        <input type="text" id="item-title" placeholder="例：黑色耳機、學生證、藍色外套" />
+      </div>
+
+      <div class="form-group">
+        <label>物品分類 <span class="required">*</span></label>
+        <select id="item-category">
+          <option value="">— 請選擇分類 —</option>
+          <option value="書本文具">📚 書本文具</option>
+          <option value="3C電子">💻 3C 電子</option>
+          <option value="衣物配件">👕 衣物配件</option>
+          <option value="證件卡片">🪪 證件卡片</option>
+          <option value="餐具飲料">🍱 餐具飲料</option>
+          <option value="其他">📦 其他</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>物品描述</label>
+        <textarea id="item-desc" placeholder="請描述物品特徵，例如顏色、品牌、型號、有無特殊標記等…"></textarea>
+      </div>
+    </div>
+
+    <!-- 地點時間 -->
+    <div class="card">
+      <div class="card-label">📍 地點與時間</div>
+
+      <div class="form-group">
+        <label>地點 <span class="required">*</span></label>
+        <input type="text" id="item-location" placeholder="例：圖書館 3F、學生餐廳、體育館門口" />
+      </div>
+
+      <div class="form-group">
+        <label>時間 <span class="required">*</span></label>
+        <input type="datetime-local" id="item-time" />
+      </div>
+    </div>
+
+    <!-- 照片 -->
+    <div class="card">
+      <div class="card-label">📷 物品照片（選填）</div>
+      <div class="photo-upload" onclick="document.getElementById('photo-input').click()">
+        <input type="file" id="photo-input" accept="image/*" onchange="previewPhoto(event)" />
+        <div class="upload-icon">📷</div>
+        <p>點此選擇照片</p>
+        <div class="hint">支援 JPG、PNG，最大 5MB</div>
+      </div>
+      <img id="photo-preview" alt="預覽圖片" />
+    </div>
+
+    <!-- 聯絡方式 -->
+    <div class="card">
+      <div class="card-label">📞 聯絡方式</div>
+      <div class="form-group">
+        <label>聯絡資訊 <span class="required">*</span></label>
+        <input type="text" id="item-contact" placeholder="例：姓名 + 電話 / LINE ID / Email" />
+      </div>
+    </div>
+
+    <button class="btn-submit" id="submit-btn" onclick="submitPost()">✅ 發布物品</button>
+    <div class="msg" id="submit-msg"></div>
+  </div>
+
+  <script>
+    let selectedType = 'lost';
+
+    // 自動填入當前時間
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('item-time').value = local;
+
+    // 若已登入，自動填聯絡方式
+    const user = JSON.parse(localStorage.getItem('lf_current_user') || 'null');
+    if (user) {
+      document.getElementById('item-contact').value = user.name + (user.phone ? ' ' + user.phone : '');
+    } else {
+      document.getElementById('login-warning').style.display = 'block';
+    }
+
+    function selectType(type) {
+      selectedType = type;
+      document.getElementById('btn-lost').className = 'type-btn' + (type === 'lost' ? ' selected-lost' : '');
+      document.getElementById('btn-found').className = 'type-btn' + (type === 'found' ? ' selected-found' : '');
+    }
+
+    function previewPhoto(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = document.getElementById('photo-preview');
+        img.src = ev.target.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById('submit-msg');
+      el.textContent = text;
+      el.className = 'msg ' + type;
+    }
+
+    function submitPost() {
+      if (!user) { showMsg('請先登入才能發布物品', 'error'); return; }
+
+      const title = document.getElementById('item-title').value.trim();
+      const category = document.getElementById('item-category').value;
+      const location = document.getElementById('item-location').value.trim();
+      const timeVal = document.getElementById('item-time').value;
+      const contact = document.getElementById('item-contact').value.trim();
+      const desc = document.getElementById('item-desc').value.trim();
+
+      if (!title) { showMsg('請填寫物品名稱', 'error'); return; }
+      if (!category) { showMsg('請選擇物品分類', 'error'); return; }
+      if (!location) { showMsg('請填寫地點', 'error'); return; }
+      if (!contact) { showMsg('請填寫聯絡方式', 'error'); return; }
+
+      const items = JSON.parse(localStorage.getItem('lf_items') || '[]');
+      const nextId = parseInt(localStorage.getItem('lf_next_id') || '1');
+      const timeDisplay = timeVal ? timeVal.replace('T', ' ').slice(0, 16) : new Date().toLocaleDateString('zh-TW');
+
+      const newItem = {
+        id: nextId,
+        type: selectedType,
+        title, category, location,
+        time: timeDisplay,
+        desc, contact,
+        status: 'searching',
+        postedBy: user.name
+      };
+
+      items.push(newItem);
+      localStorage.setItem('lf_items', JSON.stringify(items));
+      localStorage.setItem('lf_next_id', String(nextId + 1));
+
+      document.getElementById('submit-btn').disabled = true;
+      showMsg('✅ 發布成功！即將跳轉至首頁…', 'success');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    }
+  </script>
+</body>
+</html>

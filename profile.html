@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>個人資料 - 失物協尋平台</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .edit-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .edit-overlay.show { display: flex; }
+    .edit-sheet {
+      background: var(--surface);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      padding: 24px 20px 36px;
+      width: 100%;
+      max-width: var(--max-width);
+      max-height: 85dvh;
+      overflow-y: auto;
+    }
+    .edit-sheet-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0;
+    }
+    .my-item-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+      border: 1.5px solid transparent;
+      transition: var(--transition);
+    }
+    .my-item-card:hover { border-color: var(--primary); }
+    .my-item-card .item-img {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .my-item-info { flex: 1; min-width: 0; }
+    .my-item-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .my-item-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; display: flex; gap: 8px; }
+    .my-item-actions { display: flex; gap: 6px; }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- 頂部導覽 -->
+  <header class="topbar">
+    <a href="index.html" class="topbar-back" style="text-decoration:none">←</a>
+    <span class="topbar-title">個人資料</span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">登出</button>
+  </header>
+
+  <!-- 個人資訊標頭 -->
+  <div class="profile-header">
+    <div class="profile-avatar" id="profile-avatar">👤</div>
+    <div class="profile-name" id="profile-name">–</div>
+    <div class="profile-email" id="profile-email">–</div>
+  </div>
+
+  <!-- 資料區 -->
+  <div class="section">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-between align-center mb-3">
+          <span class="section-title" style="margin-bottom:0">基本資訊</span>
+          <button class="btn btn-outline btn-sm" onclick="openEdit()">✏️ 編輯</button>
+        </div>
+        <div class="info-row">
+          <span class="label">👤 姓名</span>
+          <span class="value" id="info-name">–</span>
+        </div>
+        <div class="info-row">
+          <span class="label">📧 信箱</span>
+          <span class="value" id="info-email">–</span>
+        </div>
+        <div class="info-row">
+          <span class="label">🎓 學號</span>
+          <span class="value" id="info-student-id">–</span>
+        </div>
+        <div class="info-row">
+          <span class="label">📞 電話</span>
+          <span class="value" id="info-phone">–</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的發布 -->
+  <div class="section" style="padding-top:0">
+    <div class="section-title">我的發布</div>
+    <div id="my-items"></div>
+  </div>
+
+  <div class="bottom-space"></div>
+</div>
+
+<!-- 編輯個人資料 底部彈出 -->
+<div class="edit-overlay" id="edit-overlay" onclick="closeEditIfBg(event)">
+  <div class="edit-sheet">
+    <div class="edit-sheet-title">
+      <span>編輯個人資料</span>
+      <button class="close-btn" onclick="closeEdit()">✕</button>
+    </div>
+    <form onsubmit="saveProfile(event)">
+      <div class="form-group">
+        <label class="form-label">姓名 <span class="required">*</span></label>
+        <input type="text" class="form-control" id="edit-name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">學號</label>
+        <input type="text" class="form-control" id="edit-student-id">
+      </div>
+      <div class="form-group">
+        <label class="form-label">聯絡電話 <span class="required">*</span></label>
+        <input type="tel" class="form-control" id="edit-phone" required>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button type="button" class="btn btn-ghost btn-full" onclick="closeEdit()">取消</button>
+        <button type="submit" class="btn btn-primary btn-full">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/app.js"></script>
+<script>
+  function init() {
+    const user = requireAuth();
+    if (!user) return;
+    renderProfile(user);
+    renderMyItems(user.id);
+  }
+
+  function renderProfile(user) {
+    document.getElementById('profile-name').textContent  = user.name || '使用者';
+    document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('info-name').textContent      = user.name || '–';
+    document.getElementById('info-email').textContent     = user.email;
+    document.getElementById('info-student-id').textContent = user.studentId || '未填寫';
+    document.getElementById('info-phone').textContent     = user.phone || '未填寫';
+    // 顯示姓名首字作為 avatar
+    document.getElementById('profile-avatar').textContent = (user.name || '?').charAt(0);
+  }
+
+  function renderMyItems(userId) {
+    const items = DB.getItems().filter(i => i.userId === userId);
+    const container = document.getElementById('my-items');
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="padding:32px 16px">
+          <div class="empty-icon">📭</div>
+          <h3>尚未發布任何物品</h3>
+          <p>前往<a href="post.html" style="color:var(--primary)">發布頁面</a>，新增遺失或拾獲資訊</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = items.map(item => {
+      const typeBadge = item.type === 'lost'
+        ? '<span class="badge badge-lost">遺失</span>'
+        : '<span class="badge badge-found">拾獲</span>';
+      const statusBadge = item.status === 'resolved'
+        ? '<span class="badge badge-resolved">已找到</span>'
+        : '<span class="badge badge-searching">尋找中</span>';
+      const imgContent = item.photo
+        ? `<img src="${item.photo}" class="item-img" style="object-fit:cover;width:52px;height:52px;border-radius:var(--radius-sm)" alt="">`
+        : `<div class="item-img">${getCategoryIcon(item.category)}</div>`;
+
+      return `
+        <div class="my-item-card">
+          <a href="detail.html?id=${item.id}" style="display:flex;align-items:center;gap:12px;flex:1;text-decoration:none;color:inherit;min-width:0">
+            ${imgContent}
+            <div class="my-item-info">
+              <div class="my-item-title">${escapeHtml(item.title)}</div>
+              <div class="my-item-sub">
+                <span>${typeBadge}</span>
+                <span>${statusBadge}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">📍 ${escapeHtml(item.location)}</div>
+            </div>
+          </a>
+          <div class="my-item-actions">
+            ${item.status === 'searching'
+              ? `<button class="btn btn-sm" style="background:var(--success-light);color:var(--success);border:none;font-size:12px" onclick="markResolved('${item.id}')">✓ 找到了</button>`
+              : `<button class="btn btn-sm" style="background:var(--bg);color:var(--text-muted);border:none;font-size:12px" onclick="markSearching('${item.id}')">↩ 繼續尋找</button>`
+            }
+            <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);border:none;font-size:12px" onclick="deleteItem('${item.id}')">刪除</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function markResolved(id) {
+    DB.updateItem(id, { status: 'resolved' });
+    renderMyItems(DB.getCurrentUser().id);
+    showToast('已標記為「已找到」', 'success');
+  }
+
+  function markSearching(id) {
+    DB.updateItem(id, { status: 'searching' });
+    renderMyItems(DB.getCurrentUser().id);
+    showToast('已重新標記為「尋找中」');
+  }
+
+  function deleteItem(id) {
+    if (!confirm('確定要刪除這則公告嗎？')) return;
+    DB.deleteItem(id);
+    renderMyItems(DB.getCurrentUser().id);
+    showToast('已刪除公告');
+  }
+
+  function openEdit() {
+    const user = DB.getCurrentUser();
+    document.getElementById('edit-name').value       = user.name || '';
+    document.getElementById('edit-student-id').value = user.studentId || '';
+    document.getElementById('edit-phone').value      = user.phone || '';
+    document.getElementById('edit-overlay').classList.add('show');
+  }
+
+  function closeEdit() {
+    document.getElementById('edit-overlay').classList.remove('show');
+  }
+
+  function closeEditIfBg(e) {
+    if (e.target === document.getElementById('edit-overlay')) closeEdit();
+  }
+
+  function saveProfile(e) {
+    e.preventDefault();
+    const user = DB.getCurrentUser();
+    const updated = {
+      ...user,
+      name:      document.getElementById('edit-name').value.trim(),
+      studentId: document.getElementById('edit-student-id').value.trim(),
+      phone:     document.getElementById('edit-phone').value.trim(),
+    };
+    // 更新 users 列表
+    const users = DB.getUsers();
+    const idx = users.findIndex(u => u.id === user.id);
+    if (idx !== -1) { users[idx] = updated; DB.saveUsers(users); }
+    DB.setCurrentUser(updated);
+    closeEdit();
+    renderProfile(updated);
+    showToast('個人資料已儲存', 'success');
+  }
+
+  init();
+</script>
+</body>
+</html>

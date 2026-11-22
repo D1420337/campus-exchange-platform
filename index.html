@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>校園二手書與失物協尋平台</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .type-filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px 0;
+    }
+    .type-pill {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .type-pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .stats-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 4px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .version-nav {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      overflow-x: auto;
+    }
+    .version-nav a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .version-nav a:hover {
+      text-decoration: underline;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--text-muted);
+    }
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- 頂部導覽列 -->
+  <header class="topbar">
+    <a href="index.html" class="topbar-brand">
+      <div class="brand-icon">📚</div>
+      <span class="brand-name">校園二手書與失物協尋</span>
+    </a>
+    <div class="topbar-actions" id="topbar-user">
+      <a href="auth.html" class="btn btn-primary btn-sm">登入 / 註冊</a>
+    </div>
+  </header>
+
+  <!-- 原型版本切換導航 -->
+  <nav class="version-nav">
+    <span>原型版本切換：</span>
+    <a href="index.html">標準版</a>
+    <span>|</span>
+    <a href="v2/index.html">原型 v2</a>
+    <span>|</span>
+    <a href="v3/index.html">原型 v3 (暗黑)</a>
+    <span>|</span>
+    <a href="v4/index.html">原型 v4 (公佈欄)</a>
+    <span>|</span>
+    <a href="gomoku/index.html">五子棋小遊戲</a>
+  </nav>
+
+  <!-- 搜尋區 -->
+  <section class="search-section">
+    <h1 class="search-heading">快速尋找二手書或失物資訊</h1>
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="輸入關鍵字搜尋（例如：微積分、耳機、學生證）" oninput="handleSearch()" />
+      <button class="search-icon" aria-label="搜尋">🔍</button>
+    </div>
+  </section>
+
+  <!-- 物品類型切換 (全部 / 遺失 / 拾獲) -->
+  <div class="type-filter-bar">
+    <div class="type-pill active" data-type="all" onclick="setTypeFilter('all')">全部物品</div>
+    <div class="type-pill" data-type="lost" onclick="setTypeFilter('lost')">尋找 / 遺失</div>
+    <div class="type-pill" data-type="found" onclick="setTypeFilter('found')">讓出 / 拾獲</div>
+  </div>
+
+  <!-- 分類篩選滑動標籤 -->
+  <div class="category-scroll" id="category-chips"></div>
+
+  <!-- 統計與排序 -->
+  <div class="stats-info">
+    <span id="items-count">載入中…</span>
+  </div>
+
+  <!-- 物品清單 -->
+  <main class="item-list" id="item-list">
+    <div class="empty-state">載入中...</div>
+  </main>
+
+  <!-- 底部發布按鈕 -->
+  <a href="post.html" class="fab">✏️ 發布物品資訊</a>
+
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  let currentCategory = 'all';
+  let currentType = 'all';
+
+  function initPage() {
+    renderTopbarUser('topbar-user');
+    renderCategories();
+    renderItems();
+  }
+
+  function renderCategories() {
+    const container = document.getElementById('category-chips');
+    container.innerHTML = CATEGORIES.map(c => `
+      <div class="chip ${c.value === currentCategory ? 'active' : ''}" onclick="setCategoryFilter('${c.value}')">
+        <span>${c.icon}</span>
+        <span>${c.label}</span>
+      </div>
+    `).join('');
+  }
+
+  function setTypeFilter(type) {
+    currentType = type;
+    document.querySelectorAll('.type-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.type === type);
+    });
+    renderItems();
+  }
+
+  function setCategoryFilter(category) {
+    currentCategory = category;
+    renderCategories();
+    renderItems();
+  }
+
+  function handleSearch() {
+    renderItems();
+  }
+
+  function renderItems() {
+    const keyword = document.getElementById('search-input').value.trim();
+    const items = DB.searchItems({
+      keyword,
+      category: currentCategory,
+      type: currentType
+    });
+
+    const countEl = document.getElementById('items-count');
+    countEl.textContent = `共找到 ${items.length} 筆公告`;
+
+    const listEl = document.getElementById('item-list');
+    if (!items.length) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🤷</div>
+          <p>查無符合的物品或公告</p>
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = items.map(item => buildItemCard(item)).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', initPage);
+</script>
+</body>
+</html>

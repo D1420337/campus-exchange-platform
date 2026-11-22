@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>張貼公告 — 校園失物協尋 v4</title>
+  <style>
+    :root { --bg:#fef9f0; --cork:#f5e6c8; --surface:#fffdf7; --border:#e8d5a3; --primary:#d97706; --primary-dark:#b45309; --primary-light:#fde68a; --text:#1c1917; --muted:#78716c; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Helvetica Neue',Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    nav { background:var(--primary); height:58px; padding:0 20px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.15); position:sticky; top:0; z-index:100; }
+    .nav-brand { font-size:18px; font-weight:900; color:#fff; }
+    .nav-back { color:#fff; font-size:14px; font-weight:700; text-decoration:none; }
+
+    .content { max-width:640px; margin:0 auto; padding:20px 16px 70px; }
+
+    /* Type */
+    .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+    .type-note {
+      background:var(--surface); border:2px solid var(--border); border-radius:4px;
+      padding:16px; text-align:center; cursor:pointer;
+      box-shadow:3px 3px 0 var(--border); transition:.2s; position:relative;
+    }
+    .type-note::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:30px; height:10px; border-radius:0 0 4px 4px; }
+    .type-note.sel-lost { border-color:#fca5a5; background:#fff5f5; box-shadow:3px 3px 0 #fca5a5; }
+    .type-note.sel-lost::before { background:#ef4444; }
+    .type-note.sel-found { border-color:#86efac; background:#f0fdf4; box-shadow:3px 3px 0 #86efac; }
+    .type-note.sel-found::before { background:#16a34a; }
+    .type-note .tn-icon { font-size:32px; }
+    .type-note .tn-label { font-size:14px; font-weight:800; color:var(--muted); margin-top:8px; }
+    .type-note.sel-lost .tn-label { color:#b91c1c; }
+    .type-note.sel-found .tn-label { color:#15803d; }
+
+    /* Section */
+    .section { background:var(--surface); border:1px solid var(--border); border-radius:4px; margin-bottom:12px; box-shadow:2px 2px 0 var(--border); }
+    .section-top { background:var(--cork); padding:10px 16px; font-size:12px; font-weight:800; color:#7c5c1e; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+    .section-body { padding:16px; }
+
+    .form-row { display:grid; gap:12px; }
+    .form-row.two { grid-template-columns:1fr 1fr; }
+    @media(max-width:480px){ .form-row.two{grid-template-columns:1fr;} }
+    .form-group { display:flex; flex-direction:column; gap:5px; }
+    label { font-size:13px; font-weight:800; color:var(--muted); }
+    .req { color:#ef4444; }
+    input, select, textarea {
+      background:var(--bg); border:2px solid var(--border); border-radius:6px;
+      padding:10px 14px; font-size:15px; color:var(--text); font-family:inherit; outline:none;
+      transition:border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color:var(--primary); }
+    textarea { resize:vertical; min-height:80px; }
+
+    .photo-zone { border:2px dashed var(--border); border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:var(--cork); transition:.2s; }
+    .photo-zone:hover { border-color:var(--primary); }
+    .photo-zone input { display:none; }
+    .photo-zone p { font-size:14px; color:var(--muted); margin-top:6px; }
+    #photo-preview { max-width:100%; max-height:160px; border-radius:6px; margin-top:10px; display:none; }
+
+    .login-warn { background:#fef3c7; border:2px solid var(--primary-light); border-radius:8px; padding:12px; margin-bottom:14px; text-align:center; font-size:14px; color:#92400e; box-shadow:2px 2px 0 #fcd34d; }
+    .login-warn a { color:var(--primary-dark); font-weight:800; }
+
+    .btn-submit { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 3px 0 var(--primary-dark); transition:.12s; }
+    .btn-submit:hover { transform:translateY(-1px); box-shadow:0 4px 0 var(--primary-dark); }
+    .btn-submit:active { transform:translateY(1px); box-shadow:0 1px 0 var(--primary-dark); }
+    .btn-submit:disabled { background:#d6c49a; box-shadow:none; cursor:not-allowed; }
+    .msg { font-size:14px; text-align:center; margin-top:10px; padding:8px; border-radius:6px; display:none; }
+    .msg.error { background:#fee2e2; color:#b91c1c; display:block; }
+    .msg.success { background:#dcfce7; color:#15803d; display:block; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-brand">📌 校園失物協尋</div>
+    <a class="nav-back" href="index.html">← 取消</a>
+  </nav>
+
+  <div class="content">
+    <div class="login-warn" id="lw" style="display:none">⚠️ 請先 <a href="auth.html">登入或註冊</a> 才能張貼公告</div>
+
+    <div class="type-grid">
+      <div class="type-note sel-lost" id="tc-lost" onclick="selType('lost')">
+        <div class="tn-icon">😢</div>
+        <div class="tn-label">我遺失了物品</div>
+      </div>
+      <div class="type-note" id="tc-found" onclick="selType('found')">
+        <div class="tn-icon">🎉</div>
+        <div class="tn-label">我拾獲了物品</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-top">📋 物品資訊</div>
+      <div class="section-body">
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="form-group"><label>物品名稱 <span class="req">*</span></label><input id="t" type="text" placeholder="例：黑色耳機、學生證" /></div>
+        </div>
+        <div class="form-row two" style="margin-bottom:12px">
+          <div class="form-group">
+            <label>物品分類 <span class="req">*</span></label>
+            <select id="cat">
+              <option value="">— 請選擇 —</option>
+              <option value="書本文具">📚 書本文具</option>
+              <option value="3C電子">💻 3C 電子</option>
+              <option value="衣物配件">👕 衣物配件</option>
+              <option value="證件卡片">🪪 證件卡片</option>
+              <option value="餐具飲料">🍱 餐具飲料</option>
+              <option value="其他">📦 其他</option>
+            </select>
+          </div>
+          <div class="form-group"><label>顏色 / 特徵</label><input id="col" type="text" placeholder="例：黑色、有裂縫" /></div>
+        </div>
+        <div class="form-group"><label>物品描述</label><textarea id="desc" placeholder="越詳細越容易找到…"></textarea></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-top">📍 地點與時間</div>
+      <div class="section-body">
+        <div class="form-row two">
+          <div class="form-group"><label>地點 <span class="req">*</span></label><input id="loc" type="text" placeholder="例：圖書館 3F" /></div>
+          <div class="form-group"><label>時間 <span class="req">*</span></label><input id="dt" type="datetime-local" /></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-top">📷 照片（選填）</div>
+      <div class="section-body">
+        <div class="photo-zone" onclick="document.getElementById('fi').click()">
+          <input type="file" id="fi" accept="image/*" onchange="preview(event)" />
+          <div style="font-size:32px">📷</div>
+          <p>點此選擇照片</p>
+        </div>
+        <img id="photo-preview" alt="預覽" />
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-top">📞 聯絡方式</div>
+      <div class="section-body">
+        <div class="form-group"><label>聯絡資訊 <span class="req">*</span></label><input id="ct" type="text" placeholder="姓名 + 電話 / LINE / Email" /></div>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="sb" onclick="submit()">📌 張貼公告</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script>
+    let selT = 'lost';
+    const now = new Date();
+    document.getElementById('dt').value = new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+    const user = JSON.parse(localStorage.getItem('lf_current_user')||'null');
+    if (user) document.getElementById('ct').value = user.name+(user.phone?' '+user.phone:'');
+    else document.getElementById('lw').style.display='block';
+
+    function selType(t){selT=t;document.getElementById('tc-lost').className='type-note'+(t==='lost'?' sel-lost':'');document.getElementById('tc-found').className='type-note'+(t==='found'?' sel-found':'');}
+    function preview(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const i=document.getElementById('photo-preview');i.src=ev.target.result;i.style.display='block';};r.readAsDataURL(f);}
+    function sm(txt,cls){const e=document.getElementById('msg');e.textContent=txt;e.className='msg '+cls;}
+    function submit(){
+      if(!user){sm('請先登入才能發布','error');return;}
+      const t=document.getElementById('t').value.trim(),cat=document.getElementById('cat').value,loc=document.getElementById('loc').value.trim(),dt=document.getElementById('dt').value,ct=document.getElementById('ct').value.trim(),desc=document.getElementById('desc').value.trim(),col=document.getElementById('col').value.trim();
+      if(!t){sm('請填寫物品名稱','error');return;}
+      if(!cat){sm('請選擇分類','error');return;}
+      if(!loc){sm('請填寫地點','error');return;}
+      if(!ct){sm('請填寫聯絡方式','error');return;}
+      const items=JSON.parse(localStorage.getItem('lf_items')||'[]'),id=parseInt(localStorage.getItem('lf_next_id')||'1');
+      items.push({id,type:selT,title:t,category:cat,location:loc,time:dt?dt.replace('T',' ').slice(0,16):'',desc:(col?'特徵：'+col+'\n':'')+desc,contact:ct,status:'searching',postedBy:user.name});
+      localStorage.setItem('lf_items',JSON.stringify(items));localStorage.setItem('lf_next_id',String(id+1));
+      document.getElementById('sb').disabled=true;
+      sm('✅ 公告張貼成功！即將跳轉…','success');
+      setTimeout(()=>location.href='index.html',1500);
+    }
+  </script>
+</body>
+</html>
